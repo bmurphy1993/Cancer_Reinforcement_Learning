@@ -33,6 +33,11 @@ from lifelines import CoxPHFitter
 
 device = torch.device('cpu')
 
+# Randomness
+random.seed(2021)
+np.random.seed(2021)
+torch.manual_seed(2021)
+
 
 # Import Data
 
