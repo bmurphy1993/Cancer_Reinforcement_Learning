@@ -16,5 +16,5 @@ Steps to run the cancer reinforcement learning simulation and generate figures:
 
 Notes
   - All simulations are set to run for 200,000 rounds by default
-  - # of rounds and all other hyperparameters can be adjusted in "RL_simulation" files
+  - Number of rounds and all other hyperparameters can be adjusted in "RL_simulation" files
   - Report figures will export to "figs" folder
