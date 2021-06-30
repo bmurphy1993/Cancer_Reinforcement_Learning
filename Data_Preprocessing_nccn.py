@@ -4,7 +4,7 @@
 # # Data Exploration and Preprocessing
 # TCGA Reannotated Ovarian Cancer Clinical Data 
 
-# In[131]:
+# In[1]:
 
 
 import numpy as np
@@ -41,7 +41,7 @@ torch.manual_seed(2021)
 
 # Import Data
 
-# In[132]:
+# In[2]:
 
 
 # Villalobos 2018 reannotated TCGA data (https://ascopubs.org/doi/suppl/10.1200/CCI.17.00096)
@@ -66,7 +66,7 @@ drugs['Correction'] = drugs['Correction'].str.strip()
 
 # TCGA 3: Clean
 
-# In[133]:
+# In[3]:
 
 
 # Drop columns with all missing values
@@ -113,7 +113,7 @@ tcga_ov_3_clean = tcga_ov_3_clean[tcga_ov_3_clean['days_to_drug_therapy_end'] !=
 
 # TCGA 3: Fix/standardize time variables and fix order of therapy lines
 
-# In[134]:
+# In[4]:
 
 
 # Fix values where start and end are switched
@@ -238,7 +238,7 @@ tcga_barcodes = list(lines_df['bcr_patient_barcode'].unique())
 
 # TCGA 1: Clean
 
-# In[135]:
+# In[5]:
 
 
 # Keep subset of variables 
@@ -303,7 +303,7 @@ tcga_ov_1_keep
 
 # Data summary table(s)
 
-# In[136]:
+# In[6]:
 
 
 ############## Fix so that if a wb doesn't already exist it creates one
@@ -398,7 +398,7 @@ tcga_ov_1_keep
 
 # Add death dummy to drug lines data
 
-# In[137]:
+# In[7]:
 
 
 # Merge in final death event for each patient
@@ -427,7 +427,7 @@ def get_index_pos(my_list, val):
 lines_df_2
 
 
-# In[138]:
+# In[8]:
 
 
 # Create version of final dataset that only includes patients who died
@@ -439,7 +439,7 @@ lines_df_d
 
 # Create version of data for regression
 
-# In[139]:
+# In[9]:
 
 
 def fix_treat(row):
@@ -510,7 +510,7 @@ df_reg
 
 # Treatment summary
 
-# In[140]:
+# In[10]:
 
 
 def freq_heat(data, fig_title, file_name):
@@ -553,7 +553,7 @@ freq_heat(df_d_reg, 'Treatment Frequency and Timing - Deceased Patients', 'heat_
 
 # State and Action set
 
-# In[141]:
+# In[11]:
 
 
 # States
@@ -638,7 +638,7 @@ def rand_bin_array(K, N):
 
 # Restricted drug list
 
-# In[142]:
+# In[12]:
 
 
 # Full dataset
@@ -660,7 +660,7 @@ print(len(combos_res_d))
 print(combos_res_d[0:10])
 
 
-# Variable Weights
+# Variable weights
 
 # In[ ]:
 
@@ -692,7 +692,7 @@ tg_weights_d = [weight / len(pat_vars_d) for weight in tg_weights_d]
 
 # Set full or deceased dataset
 
-# In[143]:
+# In[13]:
 
 
 # Treatment States = {No Treatment, Treatment, Death}
@@ -720,7 +720,7 @@ ts_weights = ts_weights_d
 
 # Cox Proportional Hazard Regression
 
-# In[144]:
+# In[14]:
 
 
 # Fit regressions
@@ -739,7 +739,7 @@ cph_treat = CoxPHFitter(penalizer=0.1)
 cph_treat.fit(X_treat, duration_col='treat_months', event_col='no_treat', robust=True)
 
 
-# In[145]:
+# In[15]:
 
 
 def cph_probs(data, state, months, treat_months, prev_lines, action, age, race, tumor_stage, tumor_grade):
@@ -776,14 +776,14 @@ tg_arr = np.array([0, 0, 1, 0, 0])
 cph_probs(trans_data, 'T', 70, 15, 2, ['Carboplatin', 'Paclitaxel'], 80, race_arr, ts_arr, tg_arr)
 
 
-# In[146]:
+# In[16]:
 
 
 # cph_surv.baseline_survival_.to_csv('cph_surv_baseline.csv', index=False)
 # cph_treat.baseline_survival_.to_csv('cph_treat_baseline.csv', index=False)
 
 
-# In[147]:
+# In[17]:
 
 
 # CPH Death Regression Baseline Survival
@@ -804,7 +804,7 @@ plt.yticks(fontsize=12)
 # cph_treat.print_summary()
 
 
-# In[148]:
+# In[18]:
 
 
 # CPH Remission/Recurrence Regression Baseline Survival
@@ -823,7 +823,7 @@ plt.yticks(fontsize=12)
 
 # Q-Network: MLP
 
-# In[149]:
+# In[19]:
 
 
 # Define DQN, one hidden layer MLP for now
@@ -841,7 +841,7 @@ class DQN(nn.Module):
         return out
 
 
-# In[150]:
+# In[20]:
 
 
 # Create a bigger NN
@@ -877,7 +877,7 @@ class DQN_3(nn.Module):
 # 
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 
-# In[151]:
+# In[21]:
 
 
 Transition = namedtuple('Transition',
@@ -909,7 +909,7 @@ class ReplayMemory(object):
 # 
 # Use Q update formua: $Q^{\pi}(s,a) \leftarrow Q^{\pi}(s,a) + \alpha \cdot [r + \gamma \cdot Q^{\pi}(s', a') - Q^{\pi}(s,a)]$
 
-# In[152]:
+# In[22]:
 
 
 def optimize_model():
@@ -969,20 +969,20 @@ def optimize_model():
 
 # State Class
 
-# In[153]:
+# In[23]:
 
 
 # Globals
 START_STATE = 'T'
 GAMMA = 0.99 # orig 0.99
 ALPHA = 0.01 # orig 0.01
-EPS_START = 0.90 # orig 0.9
+EPS_START = 0.9 # orig 0.9
 EPS_END = 0.05 # orig 0.05
 EPS_DECAY = 100 # Increase to slow decay. Orig 100
 BATCH_SIZE = 100 # orig 100
 TARGET_UPDATE = 10 # orig 10
 IN_FEATURES = 5 + len(races2)+len(tumor_stages2)+len(tumor_grades2) # health state, months, months on treatment, age, previous lines + dummy arrays
-OUT_FEATURES = len(combos_drugs_res) # Change for restricted vs. full action set ('_res' suffix)
+OUT_FEATURES = len(combos_drugs) # Change for restricted vs. full action set ('_res' suffix)
 
 policy = DQN_3(IN_FEATURES, OUT_FEATURES).to(device)
 target_net = DQN_3(IN_FEATURES, OUT_FEATURES).to(device)
@@ -1019,9 +1019,85 @@ class State:
         self.isEnd = False
 
 
+# In[24]:
+
+
+class NCCNAgent():
+    def __init__(self, combos_drugs):
+        self.cancer_progression={i:None for i in ["I", "IA", "IB", "IC", "II", "IIA", "IIB", "IIC", "III", "IIIA", "IIIB", "IIIC", "IV", "IVA", "IVB", "IVC", 'NOT SPECIFIED'] }
+        self.combos_drugs=combos_drugs
+    
+    def chooseAction(self, state):
+        pt_state=state.state
+        pt_tumor_stage=state.tumor_stage
+        
+        if self.cancer_progression[pt_tumor_stage]!="N":
+            self.cancer_progression[pt_tumor_stage]=pt_state
+            recurrence=False
+        
+        else:
+            recurrence=True
+        
+#         print(self.cancer_progression)
+        
+        if pt_state == 'N':
+            action = []
+            return action
+        
+        if pt_tumor_stage=="NOT SPECIFIED":
+            action = ['Carboplatin', 'Paclitaxel']
+            return action
+        
+        
+        if pt_tumor_stage in ["I", "IA", "IB", "IC"] and recurrence:
+            actions= [['Carboplatin', 'Docetaxel'], ['Carboplatin', 'Docetaxel', 'Doxorubicin'], ['Carboplatin', 'Doxorubicin', 'Paclitaxel'], ['Tamoxifen'], ['Carboplatin', 'Docetaxel', 'Letrozole', 'Leuprolide'], ['Carboplatin', 'Docetaxel', 'Leuprolide'], ['Letrozole', 'Leuprolide']]
+            idx = random.randrange(0, len(actions))
+#             print("Random Index: ", idx)
+            action=actions[idx]
+            act= self.combos_drugs.index(action)       
+        
+        elif pt_tumor_stage in ["I", "IA", "IB", "IC"]:
+            actions=[['Carboplatin', 'Paclitaxel'], ['Letrozole'], ['Anastrozole'], ['Capecitabine']]
+            idx = random.randrange(0, len(actions))
+#             print("Random Index: ", idx)
+            action=actions[idx]
+            act= self.combos_drugs.index(action)
+            
+            
+        elif pt_tumor_stage in ["II", "IIA", "IIB", "IIC", "III", "IIIA", "IIIB", "IIIC", "IV", "IVA", "IVB", "IVC"] and recurrence:
+            actions = [['Carboplatin', 'Docetaxel'], ['Carboplatin', 'Paclitaxel'], ['Tamoxifen'], ['Carboplatin', 'Docetaxel', 'Letrozole', 'Leuprolide'], ['Carboplatin', 'Docetaxel', 'Leuprolide'], ['Letrozole', 'Leuprolide'] ]
+            idx = random.randrange(0, len(actions))
+#             print("Random Index: ", idx)
+            action=actions[idx]
+            act = self.combos_drugs.index(action)
+            
+        elif pt_tumor_stage in ["II", "IIA", "IIB", "IIC", "III", "IIIA", "IIIB", "IIIC", "IV", "IVA", "IVB", "IVC"]:
+            actions = [['Carboplatin', 'Paclitaxel'], ['Bevacizumab', 'Carboplatin', 'Paclitaxel'], ['Letrozole'], ['Anastrozole'], ['Capecitabine']]
+            idx = random.randrange(0, len(actions))
+#             print("Random Index: ", idx)
+            action=actions[idx]
+            act = self.combos_drugs.index(action)
+
+            
+#         elif pt_tumor_stage in ["III", "IIIA", "IIIB", "IIIC"]:
+            
+#         elif pt_tumor_stage in ["IV", "IVA", "IVB", "IVC"]:
+        
+        else:
+            actions = [['Carboplatin', 'Paclitaxel']]
+            idx = random.randrange(0, len(actions))
+#             print("Random Index: ", idx)
+            action=actions[idx]
+            act = self.combo_drugs.index(action)
+    
+            
+        return action
+            
+
+
 # Environment Class
 
-# In[154]:
+# In[29]:
 
 
 class CancerEnv:
@@ -1031,11 +1107,12 @@ class CancerEnv:
         self.treat_mo = 0
         self.prev_lines = 0
         self.round = 0
-        self.actions = combos_drugs_res # Change for restricted vs. full action set ('_res' suffix)
+        self.actions = combos_drugs # Change for restricted vs. full action set ('_res' suffix)
         # initial state and action reward
         self.state_values = {'N':1, 'T':1, 'D':-1}       # not sure if need these, need action values instead. Can it be like: Combo: Value - xt?
         self.statevals_list = [1, 1, -1]      # for [N, T, D]
         self.s_a_values = {} 
+        self.nccnAgent=NCCNAgent(combos_drugs)
         for i in state_set:
             for j in combos:
                 self.s_a_values[repr([i, j])] = 0
@@ -1106,6 +1183,7 @@ class CancerEnv:
         self.treat_mo = 0
         self.prev_lines = 0
         self.State = State()
+        self.nccnAgent=NCCNAgent(combos_drugs)
 
     def play(self, rounds=1000, verbose=True):
         since = time.time()
@@ -1139,7 +1217,8 @@ class CancerEnv:
                 self.reset()
                 self.round += 1
             else:
-                action = self.chooseAction()
+#                 action = self.chooseAction()
+                action = self.nccnAgent.chooseAction(self.State)
                 try:
                     act_ind = torch.tensor([self.actions.index(action)])
                 except ValueError:
@@ -1213,7 +1292,7 @@ class CancerEnv:
 
 # Treat patients
 
-# In[155]:
+# In[30]:
 
 
 if __name__ == '__main__':
@@ -1227,7 +1306,7 @@ if __name__ == '__main__':
 
 # Total rewards
 
-# In[156]:
+# In[31]:
 
 
 plt.style.use('default')
@@ -1244,7 +1323,7 @@ plt.yticks(fontsize=12)
 
 # Moving average
 
-# In[157]:
+# In[32]:
 
 
 # Reward DF
@@ -1254,12 +1333,12 @@ reward_df['SMA1000'] = reward_df.iloc[:,0].rolling(window=1000).mean()
 reward_df['CMA'] = reward_df.iloc[:,0].expanding(min_periods=2).mean()
 reward_df['EMA100'] = reward_df.iloc[:,0].ewm(span=100, adjust=False).mean()
 # Save CSV
-reward_df.to_csv('reward_df_res.csv', index=False)
+reward_df.to_csv('reward_df_nccn.csv', index=False)
 # Show
 reward_df
 
 
-# In[158]:
+# In[33]:
 
 
 # Plot
@@ -1281,17 +1360,17 @@ plt.legend()
 
 # Simulated trajectories data
 
-# In[160]:
+# In[35]:
 
 
 # Save CSV
-sim_trajectories.to_csv('sim_trajectories_res.csv', index=False)
+sim_trajectories.to_csv('sim_trajectories_nccn.csv', index=False)
 
 # Show
 sim_trajectories.head(30)
 
 
-# In[161]:
+# In[36]:
 
 
 # Average value plots
@@ -1316,14 +1395,14 @@ plt.yticks(fontsize=10)
 
 # Simulation Heatmap
 
-# In[162]:
+# In[37]:
 
 
 sim_last1000 = sim_trajectories.loc[sim_trajectories['patient'] >= sim_trajectories['patient'].max()-1000].reset_index(drop=True)
 
 sim_last1000['ther_str'] = [','.join(map(str, l)) for l in sim_last1000['therapy']]
 
-sim_last1000.to_pickle('sim_last1000_res.pkl')
+sim_last1000.to_pickle('sim_last1000_nccn.pkl')
 
 freq_heat(sim_last1000, 'Treatment Frequency and Timing - AI Policy', 'heat_data_ai.png')
 

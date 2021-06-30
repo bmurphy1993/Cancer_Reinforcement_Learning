@@ -660,7 +660,37 @@ print(len(combos_res_d))
 print(combos_res_d[0:10])
 
 
-# Static transition matrix
+# Variable weights
+
+# In[ ]:
+
+
+# Full
+pat_vars = lines_df_2.drop_duplicates('patient')[['race', 'tumor_stage', 'tumor_grade']].reset_index(drop=True)
+    # race
+race_weights_full = list(pat_vars.groupby('race').count().reset_index()['tumor_stage'])
+race_weights_full = [weight / len(pat_vars) for weight in race_weights_full]
+    # tumor stage
+ts_weights_full = list(pat_vars.groupby('tumor_stage').count().reset_index()['race'])
+ts_weights_full = [weight / len(pat_vars) for weight in ts_weights_full]
+    # tumor grade
+tg_weights_full = list(pat_vars.groupby('tumor_grade').count().reset_index()['race'])
+tg_weights_full = [weight / len(pat_vars) for weight in tg_weights_full]
+
+# Deceased only
+pat_vars_d = lines_df_d.drop_duplicates('patient')[['race', 'tumor_stage', 'tumor_grade']].reset_index(drop=True)
+    # race
+race_weights_d = list(pat_vars_d.groupby('race').count().reset_index()['tumor_stage'])
+race_weights_d = [weight / len(pat_vars_d) for weight in race_weights_d]
+    # tumor stage
+ts_weights_d = list(pat_vars_d.groupby('tumor_stage').count().reset_index()['race'])
+ts_weights_d = [weight / len(pat_vars_d) for weight in ts_weights_d]
+    # tumor grade
+tg_weights_d = list(pat_vars_d.groupby('tumor_grade').count().reset_index()['race'])
+tg_weights_d = [weight / len(pat_vars_d) for weight in tg_weights_d]
+
+
+# Set full or deceased dataset
 
 # In[13]:
 
@@ -681,6 +711,11 @@ tumor_grades2 = tumor_grades_d2
 
 # Dataset to use
 trans_data = df_d_reg # change to df_reg if using full dataset
+
+# Weights to use
+race_weights = race_weights_d
+tg_weights = tg_weights_d
+ts_weights = ts_weights_d
 
 
 # Cox Proportional Hazard Regression
@@ -962,19 +997,19 @@ class State:
     def __init__(self, state=START_STATE):
         self.state = state
         self.age = round(np.random.normal(trans_data['age'].mean(), trans_data['age'].std(), 1)[0])
-        self.race = random.choice(races) # choose from all including 'NOT SPECIFIED'
+        self.race = random.choices(races, weights=race_weights)[0] # choose from all including 'NOT SPECIFIED'
         self.r_arr = np.zeros(len(races2)) # sim patient vectors = 0 if 'NOT SPECIFIED'
         if self.race == 'NOT SPECIFIED':
             pass
         else:
             self.r_arr[races2.index(self.race)] = 1
-        self.tumor_stage = random.choice(tumor_stages) 
+        self.tumor_stage = random.choices(tumor_stages, weights=ts_weights)[0] 
         self.ts_arr = np.zeros(len(tumor_stages2))
         if self.tumor_stage == 'NOT SPECIFIED':
             pass
         else:
             self.ts_arr[tumor_stages2.index(self.tumor_stage)] = 1
-        self.tumor_grade = random.choice(tumor_grades)
+        self.tumor_grade = random.choices(tumor_grades, weights=tg_weights)[0]
         self.tg_arr = np.zeros(len(tumor_grades2))
         if self.tumor_grade == 'NOT SPECIFIED':
             pass

@@ -4,7 +4,7 @@
 # # Data Exploration and Preprocessing
 # TCGA Reannotated Ovarian Cancer Clinical Data 
 
-# In[131]:
+# In[1]:
 
 
 import numpy as np
@@ -41,7 +41,7 @@ torch.manual_seed(2021)
 
 # Import Data
 
-# In[132]:
+# In[2]:
 
 
 # Villalobos 2018 reannotated TCGA data (https://ascopubs.org/doi/suppl/10.1200/CCI.17.00096)
@@ -66,7 +66,7 @@ drugs['Correction'] = drugs['Correction'].str.strip()
 
 # TCGA 3: Clean
 
-# In[133]:
+# In[3]:
 
 
 # Drop columns with all missing values
@@ -113,7 +113,7 @@ tcga_ov_3_clean = tcga_ov_3_clean[tcga_ov_3_clean['days_to_drug_therapy_end'] !=
 
 # TCGA 3: Fix/standardize time variables and fix order of therapy lines
 
-# In[134]:
+# In[4]:
 
 
 # Fix values where start and end are switched
@@ -238,7 +238,7 @@ tcga_barcodes = list(lines_df['bcr_patient_barcode'].unique())
 
 # TCGA 1: Clean
 
-# In[135]:
+# In[5]:
 
 
 # Keep subset of variables 
@@ -303,7 +303,7 @@ tcga_ov_1_keep
 
 # Data summary table(s)
 
-# In[136]:
+# In[6]:
 
 
 ############## Fix so that if a wb doesn't already exist it creates one
@@ -398,7 +398,7 @@ writer.close()
 
 # Add death dummy to drug lines data
 
-# In[137]:
+# In[7]:
 
 
 # Merge in final death event for each patient
@@ -427,7 +427,7 @@ def get_index_pos(my_list, val):
 lines_df_2
 
 
-# In[138]:
+# In[8]:
 
 
 # Create version of final dataset that only includes patients who died
@@ -439,7 +439,7 @@ lines_df_d
 
 # Create version of data for regression
 
-# In[139]:
+# In[9]:
 
 
 def fix_treat(row):
@@ -510,7 +510,7 @@ df_reg
 
 # Treatment summary
 
-# In[140]:
+# In[10]:
 
 
 def freq_heat(data, fig_title, file_name):
@@ -553,7 +553,7 @@ freq_heat(df_d_reg, 'Treatment Frequency and Timing - Deceased Patients', 'heat_
 
 # State and Action set
 
-# In[141]:
+# In[11]:
 
 
 # States
@@ -638,7 +638,7 @@ def rand_bin_array(K, N):
 
 # Restricted drug list
 
-# In[142]:
+# In[12]:
 
 
 # Full dataset
@@ -660,9 +660,39 @@ print(len(combos_res_d))
 print(combos_res_d[0:10])
 
 
-# Static transition matrix
+# Variable weights
 
-# In[143]:
+# In[13]:
+
+
+# Full
+pat_vars = lines_df_2.drop_duplicates('patient')[['race', 'tumor_stage', 'tumor_grade']].reset_index(drop=True)
+    # race
+race_weights_full = list(pat_vars.groupby('race').count().reset_index()['tumor_stage'])
+race_weights_full = [weight / len(pat_vars) for weight in race_weights_full]
+    # tumor stage
+ts_weights_full = list(pat_vars.groupby('tumor_stage').count().reset_index()['race'])
+ts_weights_full = [weight / len(pat_vars) for weight in ts_weights_full]
+    # tumor grade
+tg_weights_full = list(pat_vars.groupby('tumor_grade').count().reset_index()['race'])
+tg_weights_full = [weight / len(pat_vars) for weight in tg_weights_full]
+
+# Deceased only
+pat_vars_d = lines_df_d.drop_duplicates('patient')[['race', 'tumor_stage', 'tumor_grade']].reset_index(drop=True)
+    # race
+race_weights_d = list(pat_vars_d.groupby('race').count().reset_index()['tumor_stage'])
+race_weights_d = [weight / len(pat_vars_d) for weight in race_weights_d]
+    # tumor stage
+ts_weights_d = list(pat_vars_d.groupby('tumor_stage').count().reset_index()['race'])
+ts_weights_d = [weight / len(pat_vars_d) for weight in ts_weights_d]
+    # tumor grade
+tg_weights_d = list(pat_vars_d.groupby('tumor_grade').count().reset_index()['race'])
+tg_weights_d = [weight / len(pat_vars_d) for weight in tg_weights_d]
+
+
+# Set full or deceased dataset
+
+# In[14]:
 
 
 # Treatment States = {No Treatment, Treatment, Death}
@@ -682,10 +712,15 @@ tumor_grades2 = tumor_grades_d2
 # Dataset to use
 trans_data = df_d_reg # change to df_reg if using full dataset
 
+# Weights to use
+race_weights = race_weights_d
+tg_weights = tg_weights_d
+ts_weights = ts_weights_d
+
 
 # Cox Proportional Hazard Regression
 
-# In[144]:
+# In[15]:
 
 
 # Fit regressions
@@ -704,7 +739,7 @@ cph_treat = CoxPHFitter(penalizer=0.1)
 cph_treat.fit(X_treat, duration_col='treat_months', event_col='no_treat', robust=True)
 
 
-# In[145]:
+# In[16]:
 
 
 def cph_probs(data, state, months, treat_months, prev_lines, action, age, race, tumor_stage, tumor_grade):
@@ -741,14 +776,14 @@ tg_arr = np.array([0, 0, 1, 0, 0])
 cph_probs(trans_data, 'T', 70, 15, 2, ['Carboplatin', 'Paclitaxel'], 80, race_arr, ts_arr, tg_arr)
 
 
-# In[146]:
+# In[17]:
 
 
 cph_surv.baseline_survival_.to_csv('cph_surv_baseline.csv', index=False)
 cph_treat.baseline_survival_.to_csv('cph_treat_baseline.csv', index=False)
 
 
-# In[147]:
+# In[18]:
 
 
 # CPH Death Regression Baseline Survival
@@ -769,7 +804,7 @@ plt.savefig('baseline_surv_death.png')
 # cph_treat.print_summary()
 
 
-# In[148]:
+# In[19]:
 
 
 # CPH Remission/Recurrence Regression Baseline Survival
@@ -788,7 +823,7 @@ plt.savefig('baseline_surv_recurrence.png')
 
 # Q-Network: MLP
 
-# In[149]:
+# In[20]:
 
 
 # Define DQN, one hidden layer MLP for now
@@ -806,7 +841,7 @@ class DQN(nn.Module):
         return out
 
 
-# In[150]:
+# In[21]:
 
 
 # Create a bigger NN
@@ -842,7 +877,7 @@ class DQN_3(nn.Module):
 # 
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 
-# In[151]:
+# In[22]:
 
 
 Transition = namedtuple('Transition',
@@ -874,7 +909,7 @@ class ReplayMemory(object):
 # 
 # Use Q update formua: $Q^{\pi}(s,a) \leftarrow Q^{\pi}(s,a) + \alpha \cdot [r + \gamma \cdot Q^{\pi}(s', a') - Q^{\pi}(s,a)]$
 
-# In[152]:
+# In[23]:
 
 
 def optimize_model():
@@ -962,19 +997,19 @@ class State:
     def __init__(self, state=START_STATE):
         self.state = state
         self.age = round(np.random.normal(trans_data['age'].mean(), trans_data['age'].std(), 1)[0])
-        self.race = random.choice(races) # choose from all including 'NOT SPECIFIED'
+        self.race = random.choices(races, weights=race_weights)[0] # choose from all including 'NOT SPECIFIED'
         self.r_arr = np.zeros(len(races2)) # sim patient vectors = 0 if 'NOT SPECIFIED'
         if self.race == 'NOT SPECIFIED':
             pass
         else:
             self.r_arr[races2.index(self.race)] = 1
-        self.tumor_stage = random.choice(tumor_stages) 
+        self.tumor_stage = random.choices(tumor_stages, weights=ts_weights)[0] 
         self.ts_arr = np.zeros(len(tumor_stages2))
         if self.tumor_stage == 'NOT SPECIFIED':
             pass
         else:
             self.ts_arr[tumor_stages2.index(self.tumor_stage)] = 1
-        self.tumor_grade = random.choice(tumor_grades)
+        self.tumor_grade = random.choices(tumor_grades, weights=tg_weights)[0]
         self.tg_arr = np.zeros(len(tumor_grades2))
         if self.tumor_grade == 'NOT SPECIFIED':
             pass
